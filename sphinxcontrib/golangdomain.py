@@ -13,13 +13,15 @@ import re
 import string
 
 from docutils import nodes
+from docutils.parsers.rst import directives
 
 from sphinx import addnodes
 from sphinx.roles import XRefRole
 from sphinx.locale import l_, _
-from sphinx.domains import Domain, ObjType
+from sphinx.domains import Domain, ObjType, Index
 from sphinx.directives import ObjectDescription
 from sphinx.util.nodes import make_refnode
+from sphinx.util.compat import Directive
 from sphinx.util.docfields import Field, TypedField
 
 
@@ -32,7 +34,7 @@ go_sig_re = re.compile(
         ([\w:.]+)  \s*     # thing name
         (?:\((.*)\)        # optional: arguments
          (?:\s \s* (.*))?  #           return annotation
-        )? $                 # and nothing more
+        )? $               # and nothing more
     ''', re.VERBOSE)
 
 
@@ -40,7 +42,6 @@ class GoObject(ObjectDescription):
     """
     Description of a Go language object.
     """
-
     doc_field_types = [
         TypedField('parameter', label=l_('Parameters'),
                    names=('param', 'parameter', 'arg', 'argument'),
@@ -59,18 +60,20 @@ class GoObject(ObjectDescription):
                      'byte', 'rune', 'uintptr', 'string'))
 
     def _parse_type(self, node, gotype):
+        print "_parse_type: %s, %s, %s\n" % (node, type(gotype), gotype)
         # add cross-ref nodes for all words
-        for part in filter(None, wsplit_re.split(gotype)):
-            tnode = nodes.Text(part, part)
-            if part[0] in string.ascii_letters+'_' and \
-                   part not in self.stopwords:
-                pnode = addnodes.pending_xref(
-                    '', refdomain='go', reftype='type', reftarget=part,
-                    modname=None, classname=None)
-                pnode += tnode
-                node += pnode
-            else:
-                node += tnode
+        if gotype:
+            for part in filter(None, wsplit_re.split(gotype)):
+                tnode = nodes.Text(part, part)
+                if part[0] in string.ascii_letters+'_' and \
+                        part not in self.stopwords:
+                    pnode = addnodes.pending_xref(
+                        '', refdomain='go', reftype='type', reftarget=part,
+                        modname=None, classname=None)
+                    pnode += tnode
+                    node += pnode
+                else:
+                    node += tnode
 
     def handle_signature(self, sig, signode):
         """Transform a Go signature into RST nodes."""
@@ -99,8 +102,6 @@ class GoObject(ObjectDescription):
             if self.objtype == 'function':
                 # for functions, add an empty parameter list
                 signode += addnodes.desc_parameterlist()
-            if const:
-                signode += addnodes.desc_addname(const, const)
             return fullname
 
         paramlist = addnodes.desc_parameterlist()
@@ -121,13 +122,26 @@ class GoObject(ObjectDescription):
                 param += nodes.emphasis(' '+argname, u'\xa0'+argname)
             paramlist += param
         signode += paramlist
-        if const:
-            signode += addnodes.desc_addname(const, const)
         return fullname
 
     def get_index_text(self, pkgname, name):
-        """Return the text for the index entry of the object."""
-        raise NotImplementedError('must be implemented in subclasses')
+        if pkgname:
+            fullname = pkgname + '.' + name
+        else:
+            fullname = name
+
+        if self.objtype == 'function':
+            return _('%s (Go function)') % fullname
+        elif self.objtype == 'type':
+            return _('%s (Go type)') % fullname
+        elif self.objtype == 'const':
+            return _('%s (Go const)') % fullname
+        elif self.objtype == 'var':
+            return _('%s (Go variable)') % fullname
+        elif self.objtype == 'package':
+            return _('%s (Go package)') % fullname
+        else:
+            return ''
 
     def add_target_and_index(self, name, sig, signode):
         pkgname = self.options.get(
@@ -183,6 +197,50 @@ class GoXRefRole(XRefRole):
             target = target[1:]
             refnode['refspecific'] = True
         return title, target
+
+
+class GoPackage(Directive):
+    """
+    Directive to mark description of a new package.
+    """
+
+    has_content = False
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = False
+    option_spec = {
+        'platform': lambda x: x,
+        'synopsis': lambda x: x,
+        'noindex': directives.flag,
+        'deprecated': directives.flag,
+    }
+
+    def run(self):
+        env = self.state.document.settings.env
+        pkgname = self.arguments[0].strip()
+        noindex = 'noindex' in self.options
+        env.temp_data['go:package'] = pkgname
+        env.domaindata['go']['packages'][pkgname] = \
+            (env.docname, self.options.get('synopsis', ''),
+             self.options.get('platform', ''), 'deprecated' in self.options)
+        targetnode = nodes.target('', '', ids=['package-' + pkgname], ismod=True)
+        self.state.document.note_explicit_target(targetnode)
+        ret = [targetnode]
+        # XXX this behavior of the module directive is a mess...
+        if 'platform' in self.options:
+            platform = self.options['platform']
+            node = nodes.paragraph()
+            node += nodes.emphasis('', _('Platforms: '))
+            node += nodes.Text(platform, platform)
+            ret.append(node)
+        # the synopsis isn't printed; in fact, it is only used in the
+        # modindex currently
+        if not noindex:
+            indextext = _('%s (package)') % pkgname
+            inode = addnodes.index(entries=[('single', indextext,
+                                             'package-' + pkgname, pkgname)])
+            ret.append(inode)
+        return ret
 
 
 class GoPackageIndex(Index):
@@ -262,6 +320,7 @@ class GoDomain(Domain):
         'function': ObjType(l_('function'), 'func', 'obj'),
         'type':     ObjType(l_('type'),     'type', 'obj'),
         'var':      ObjType(l_('variable'), 'data', 'obj'),
+        'const':    ObjType(l_('const'),    'data', 'obj'),
         'package':  ObjType(l_('package'),  'pkg', 'obj')
 
     }
@@ -269,6 +328,7 @@ class GoDomain(Domain):
         'function': GoObject,
         'type':     GoObject,
         'var':      GoObject,
+        'const':    GoObject,
         'package':  GoPackage,
     }
     roles = {
@@ -306,8 +366,8 @@ class GoDomain(Domain):
         newname = None
         if name in objects:
             newname = name
-        elif package and package + '.' + name in objects:
-            newname = package + '.' + name
+        elif pkgname and pkgname + '.' + name in objects:
+            newname = pkgname + '.' + name
         elif name in objects:
             newname = name
 
@@ -322,7 +382,7 @@ class GoDomain(Domain):
         target = target.lstrip(' *&')
         if (typ == 'pkg' or
             typ == 'obj' and target in self.data['packages']):
-            docname, synopsis, platform deprecated = \
+            docname, synopsis, platform, deprecated = \
                 self.data['packages'].get(target, ('','','',''))
             if not docname:
                 return None
@@ -335,8 +395,9 @@ class GoDomain(Domain):
         else:
             pkgname = node.get('go:package')
             name, obj = self.find_obj(env, pkgname, target, typ)
+            print 'resolve_xref: %s\n' % name
             return make_refnode(builder, fromdocname, obj[0], target,
-                                contnode, target)
+                                    contnode, target)
 
     def get_objects(self):
         for pkgname, info in self.data['packages'].iteritems():

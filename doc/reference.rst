@@ -31,7 +31,7 @@ The following directives are provided for global and module level contents:
 
 The following directive is provided for module and class contents:
 
-.. rst:directive:: .. go:method:: (type) name(signature) return
+.. rst:directive:: .. go:function:: (type) name(signature) return
 
    Describes a struct method and a interface method. 
    Usage of this directive is almost as same as Python's one.
@@ -41,36 +41,21 @@ The following directive is provided for module and class contents:
 
 The following directive is provided for module contents:
 
-.. rst:directive:: .. go:struct:: name
+.. rst:directive:: .. go:type:: name
 
    Describes a struct.
    
-      .. go:struct:: Foo
-         .. go:method:: quux() return
+      .. go:type:: Foo
+         .. go:function:: quux() return
 
       -- or --
 
-      .. go:struct:: Bar
+      .. go:type:: Bar
 
-      .. go:method:: (Bar) quux() return
-
-   The first way is the preferred one.
-
-
-.. rst:directive:: .. go:interface:: name
-
-   Describes a interface.
-   
-      .. go:interface:: Foo
-         .. go:method:: quux()
-
-      -- or --
-
-      .. go:interface:: Bar
-
-      .. go:method:: (Bar) quux() return
+      .. go:function:: (Bar) quux() return
 
    The first way is the preferred one.
+
 
 
 Info field lists
