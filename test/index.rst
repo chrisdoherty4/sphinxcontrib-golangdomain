@@ -6,19 +6,56 @@
 acceptance test of golangdomain
 ===============================
 
+C language
+----------
+
+.. go:var:: FooObject* FooClass_Type
+
+.. go:type:: BarStruct
+
+.. go:function:: int function_one(FooObject *foo)
+
+.. go:function:: float function_two(FooObject foo, Bar_size_t size)
+
+
+
+Go language
+-----------
+
 .. go:const:: ConstTest
 
 .. go:var:: VariableTest
 
-.. go:function:: TestOne()
+.. go:type:: Spam
 
-.. go:function:: TestTwo(foo int)
+.. go:function:: func FuncOne()
 
-.. go:function:: TestThree(spam string, egg uint)
+.. go:function:: func FuncTwo(foo int)
 
-.. go:function:: TestFour(spam, egg uint)
+.. go:function:: func FuncThree(spam string, egg uint)
 
-.. go:function:: TestFive() string
+.. go:function:: func FuncFour(spam, egg uint)
+
+.. go:function:: func FuncFive() string
+
+.. go:function:: func FuncSix() (string, error)
+
+.. go:function:: func FuncSeven() (string, int, error)
+
+.. go:function:: func (Foo) MethodOne()
+
+.. go:function:: func (Foo) MethodTwo(spam int)
+
+.. go:function:: func (Foo) MethodThree(spam string, egg uint)
+
+.. go:function:: func (Foo) MethodFour(spam, egg uint)
+
+.. go:function:: func (Foo) MothodFive() string
+
+.. go:function:: func (Foo) MethodSix() (string, error)
+
+.. go:function:: func (Foo) MethodSeven() (string, int, error)
+
 
 
 Indices and tables
