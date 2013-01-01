@@ -70,6 +70,21 @@ Go language
 
 .. go:function:: func main.PackageFuncSeven() (string, int, error)
 
+Reference
+---------
+
+:go:data:`ConstTest`
+
+:go:data:`VariableTest`
+
+:go:type:`Spam`
+
+:go:func:`FuncOne`
+
+:go:func:`MethodOne`
+
+:go:func:`main.PackageFuncSeven`
+
 
 Indices and tables
 ==================

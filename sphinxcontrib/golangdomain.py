@@ -43,6 +43,7 @@ go_func_sig_re = re.compile(
     ''', re.VERBOSE)
 
 
+
 class GoObject(ObjectDescription):
     """
     Description of a Go language object.
@@ -76,27 +77,75 @@ class GoObject(ObjectDescription):
             else:
                 node += tnode
 
+    def _handle_general_signature(self, sig, signode, m):
+        pass
+
+    def _handle_func_signature(self, sig, signode, m):
+        func, struct, name, arglist, rettype = m.groups()
+        # debug
+        print ("(struct, name, arglist, rettype) = ('%s', '%s', '%s', '%s')\n" 
+               % (struct, name, arglist, rettype))
+
+        if func:
+            signode += addnodes.desc_addname("func", "func ")
+        if struct:
+            signode += addnodes.desc_addname("type", struct)
+        signode += addnodes.desc_name(name, name)
+        if not arglist:
+            signode += addnodes.desc_parameterlist()
+        else:
+            paramlist = addnodes.desc_parameterlist()
+            args = arglist.split(",")
+            for arg in args:
+                arg = arg.strip()
+                param = nodes.emphasis('', '', noemph=True)
+                try:
+                    argname, gotype = arg.split(' ', 1)
+                except ValueError:
+                    # no argument name given, only the type
+                    self._parse_type(param, arg)
+                else:
+                    param += nodes.emphasis(argname+' ', argname+u'\xa0')
+                    self._parse_type(param, gotype)
+                    # separate by non-breaking space in the output
+                    param += nodes.emphasis('', '', noemph=True)
+                paramlist += param
+            signode += paramlist
+
+        if struct:
+            fullname = "%s %s" % (struct, name)
+        else:
+            fullname = name
+        return fullname
+
     def handle_signature(self, sig, signode):
         """Transform a Go signature into RST nodes."""
         # first try the function pointer signature regex, it's more specific
-        m = go_sig_re.match(sig)
-        print "handle_signature:\nsig -> %s\n" % (sig,)
+        print "handle_signature:\nsig -> %s" % (sig,)
+        m = go_func_sig_re.match(sig)
+        fullname = ""
+        if m is not None:
+            fullname = self._handle_func_signature(sig, signode, m)
+            
+        """
+        else:
+            m = go_sig_re.match(sig)
+            if m is not None:
+                rettype, name, arglist, const = m.groups()
+                print ("(rettype, name, arglist, const) = ('%s', '%s', '%s', '%s')\n" 
+                       % (rettype, name, arglist, const))
+            else:
+                raise ValueError('no match')
 
-        if m is None:
-            raise ValueError('no match')
-        rettype, name, arglist, const = m.groups()
-        print "handle_signature:\nrettype -> %s\nname->%s\narglist->%s\nconst->%s\n\n" % (rettype, name, arglist, const)
-
-        signode += addnodes.desc_type('', '')
-        self._parse_type(signode[-1], rettype)
-        try:
-            classname, funcname = name.split('::', 1)
-            classname += '::'
-            signode += addnodes.desc_addname(classname, classname)
-            signode += addnodes.desc_name(funcname, funcname)
+            self._parse_type(signode[-1], rettype)
+            try:
+                classname, funcname = name.split('::', 1)
+                classname += '::'
+                signode += addnodes.desc_addname(classname, classname)
+                signode += addnodes.desc_name(funcname, funcname)
             # name (the full name) is still both parts
-        except ValueError:
-            signode += addnodes.desc_name(name, name)
+            except ValueError:
+                signode += addnodes.desc_name(name, name)
 
         typename = self.env.temp_data.get('go:type')
         if self.name == 'go:member' and typename:
@@ -132,6 +181,7 @@ class GoObject(ObjectDescription):
         signode += paramlist
         if const:
             signode += addnodes.desc_addname(const, const)
+        """
         return fullname
 
     def get_index_text(self, name):
@@ -239,6 +289,7 @@ class GoDomain(Domain):
         if target not in self.data['objects']:
             return None
         obj = self.data['objects'][target]
+        print "resolve_xref: %s\n" % locals()
         return make_refnode(builder, fromdocname, obj[0], target,
                             contnode, target)
 
