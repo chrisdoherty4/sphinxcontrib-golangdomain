@@ -56,6 +56,8 @@ Go language
 
 .. go:function:: func (Foo) MethodSeven() (string, int, error)
 
+.. go:function:: func (b Bar) MethodEight()
+
 .. go:function:: func main.PackageFuncOne()
 
 .. go:function:: func main.PackageFuncTwo(foo FooStruct)
@@ -70,6 +72,7 @@ Go language
 
 .. go:function:: func main.PackageFuncSeven() (string, int, error)
 
+
 Reference
 ---------
 
@@ -81,7 +84,9 @@ Reference
 
 :go:func:`FuncOne`
 
-:go:func:`MethodOne`
+:go:func:`(Foo) MethodOne`
+
+:go:func:`(Bar) MethodEight()`
 
 :go:func:`main.PackageFuncSeven`
 

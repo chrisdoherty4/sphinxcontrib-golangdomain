@@ -39,6 +39,19 @@ go_func_sig_re = re.compile(
          ([\w\s\[\](),]*) \s* $    # optionally return type
     ''', re.VERBOSE)
 
+go_method_re = re.compile(
+    r'''^(\([\w\s()*]+\)) \s+      # struct name
+         (\w+)                     # method name
+    ''', re.VERBOSE)
+
+def extract_method_name(name):
+    m = go_method_re.match(name)
+    if m is not None:
+        print len(m.groups())
+        _, method = m.groups()
+    else:
+        method = name
+    return method
 
 
 class GoObject(ObjectDescription):
@@ -147,6 +160,11 @@ class GoObject(ObjectDescription):
             return ''
 
     def add_target_and_index(self, name, sig, signode):
+        # debug
+        print ("add_target_and_index: (name, sig, signode) = (%s, %s, %s)\n" %
+               (name, sig, signode))
+
+        method = extract_method_name(name)
         # note target
         if name not in self.state.document.ids:
             signode['names'].append(name)
@@ -161,7 +179,7 @@ class GoObject(ObjectDescription):
                     line=self.lineno)
             inv[name] = (self.env.docname, self.objtype)
 
-        indextext = self.get_index_text(name)
+        indextext = self.get_index_text(method)
         if indextext:
             self.indexnode['entries'].append(('single', indextext, name, ''))
 
@@ -229,7 +247,6 @@ class GoDomain(Domain):
         if target not in self.data['objects']:
             return None
         obj = self.data['objects'][target]
-        print "resolve_xref: %s\n" % locals()
         return make_refnode(builder, fromdocname, obj[0], target,
                             contnode, target)
 
