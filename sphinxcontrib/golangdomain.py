@@ -28,18 +28,15 @@ wsplit_re = re.compile(r'(\W+)')
 
 # REs for Go signatures
 go_sig_re = re.compile(
-    r'''^([^(]*?)          # return type
-        ([\w:.]+)  \s*     # thing name (colon allowed for C++)
-        (?: \((.*)\) )?    # optionally arguments
-        (\s+const)? $      # const specifier
+    r'''^(\w+)                     # thing name
     ''', re.VERBOSE)
 
 go_func_sig_re = re.compile(
-    r'''^(\s* func \s*)           # func
-         (?: \((.*)\) )? \s*      # struct/interface name
-         ([\w_.]+)                # thing name
-         \( ([\w\s,]*) \) \s*     # arguments
-         ([\w\s(),]*) \s* $       # optionally return type
+    r'''^(\s* func \s*)            # func
+         (?: \((.*)\) )? \s*       # struct/interface name
+         ([\w_.]+)                 # thing name
+         \( ([\w\s\[\],]*) \) \s*  # arguments
+         ([\w\s\[\](),]*) \s* $    # optionally return type
     ''', re.VERBOSE)
 
 
@@ -61,11 +58,14 @@ class GoObject(ObjectDescription):
 
     # These Go types aren't described anywhere, so don't try to create
     # a cross-reference to them
-    stopwords = set(('const', 'void', 'char', 'int', 'long', 'FILE', 'struct'))
+    stopwords = set(('const', 'int', 'uint', 'uintptr', 'int8', 'int16', 
+                     'int32', 'int64', 'uint8', 'uint16', 'uint32',
+                     'uint64', 'string', 'error', '{}interface',
+                     '..{}interface'))
 
-    def _parse_type(self, node, ctype):
+    def _parse_type(self, node, gotype):
         # add cross-ref nodes for all words
-        for part in filter(None, wsplit_re.split(ctype)):
+        for part in filter(None, wsplit_re.split(gotype)):
             tnode = nodes.Text(part, part)
             if part[0] in string.ascii_letters+'_' and \
                    part not in self.stopwords:
@@ -78,8 +78,11 @@ class GoObject(ObjectDescription):
                 node += tnode
 
     def _handle_general_signature(self, sig, signode, m):
-        pass
-
+        name, = m.groups()
+        signode += addnodes.desc_name(name, name)
+        fullname = name
+        return fullname
+    
     def _handle_func_signature(self, sig, signode, m):
         func, struct, name, arglist, rettype = m.groups()
         # debug
@@ -89,7 +92,10 @@ class GoObject(ObjectDescription):
         if func:
             signode += addnodes.desc_addname("func", "func ")
         if struct:
-            signode += addnodes.desc_addname("type", struct)
+            signode += addnodes.desc_addname("(", "(")
+            signode += addnodes.desc_name("type", struct)
+            signode += addnodes.desc_addname(") ", ") ")
+            
         signode += addnodes.desc_name(name, name)
         if not arglist:
             signode += addnodes.desc_parameterlist()
@@ -98,7 +104,7 @@ class GoObject(ObjectDescription):
             args = arglist.split(",")
             for arg in args:
                 arg = arg.strip()
-                param = nodes.emphasis('', '', noemph=True)
+                param = addnodes.desc_parameter('', '', noemph=True)
                 try:
                     argname, gotype = arg.split(' ', 1)
                 except ValueError:
@@ -108,12 +114,11 @@ class GoObject(ObjectDescription):
                     param += nodes.emphasis(argname+' ', argname+u'\xa0')
                     self._parse_type(param, gotype)
                     # separate by non-breaking space in the output
-                    param += nodes.emphasis('', '', noemph=True)
                 paramlist += param
             signode += paramlist
 
         if struct:
-            fullname = "%s %s" % (struct, name)
+            fullname = "(%s) %s" % (struct, name)
         else:
             fullname = name
         return fullname
@@ -123,74 +128,15 @@ class GoObject(ObjectDescription):
         # first try the function pointer signature regex, it's more specific
         print "handle_signature:\nsig -> %s" % (sig,)
         m = go_func_sig_re.match(sig)
-        fullname = ""
         if m is not None:
-            fullname = self._handle_func_signature(sig, signode, m)
-            
-        """
+            return self._handle_func_signature(sig, signode, m)
         else:
             m = go_sig_re.match(sig)
-            if m is not None:
-                rettype, name, arglist, const = m.groups()
-                print ("(rettype, name, arglist, const) = ('%s', '%s', '%s', '%s')\n" 
-                       % (rettype, name, arglist, const))
-            else:
-                raise ValueError('no match')
-
-            self._parse_type(signode[-1], rettype)
-            try:
-                classname, funcname = name.split('::', 1)
-                classname += '::'
-                signode += addnodes.desc_addname(classname, classname)
-                signode += addnodes.desc_name(funcname, funcname)
-            # name (the full name) is still both parts
-            except ValueError:
-                signode += addnodes.desc_name(name, name)
-
-        typename = self.env.temp_data.get('go:type')
-        if self.name == 'go:member' and typename:
-            fullname = typename + '.' + name
-        else:
-            fullname = name
-
-        if not arglist:
-            if self.objtype == 'function':
-                # for functions, add an empty parameter list
-                signode += addnodes.desc_parameterlist()
-            if const:
-                signode += addnodes.desc_addname(const, const)
-            return fullname
-
-        paramlist = addnodes.desc_parameterlist()
-        arglist = arglist.replace('`', '').replace('\\ ', '') # remove markup
-        # this messes up function pointer types, but not too badly ;)
-        args = arglist.split(',')
-        for arg in args:
-            arg = arg.strip()
-            param = addnodes.desc_parameter('', '', noemph=True)
-            try:
-                ctype, argname = arg.rsplit(' ', 1)
-            except ValueError:
-                # no argument name given, only the type
-                self._parse_type(param, arg)
-            else:
-                self._parse_type(param, ctype)
-                # separate by non-breaking space in the output
-                param += nodes.emphasis(' '+argname, u'\xa0'+argname)
-            paramlist += param
-        signode += paramlist
-        if const:
-            signode += addnodes.desc_addname(const, const)
-        """
-        return fullname
-
+            return self._handle_general_signature(sig, signode, m)
+        
     def get_index_text(self, name):
         if self.objtype == 'function':
             return _('%s (Go function)') % name
-        elif self.objtype == 'member':
-            return _('%s (Go member)') % name
-        elif self.objtype == 'macro':
-            return _('%s (Go macro)') % name
         elif self.objtype == 'type':
             return _('%s (Go type)') % name
         elif self.objtype == 'const':
@@ -251,8 +197,6 @@ class GoDomain(Domain):
     label = 'Go'
     object_types = {
         'function': ObjType(l_('function'), 'func'),
-        'member':   ObjType(l_('member'),   'member'),
-        'macro':    ObjType(l_('macro'),    'macro'),
         'type':     ObjType(l_('type'),     'type'),
         'const':    ObjType(l_('const'),    'data'),
         'var':      ObjType(l_('variable'), 'data'),
@@ -260,16 +204,12 @@ class GoDomain(Domain):
 
     directives = {
         'function': GoObject,
-        'member':   GoObject,
-        'macro':    GoObject,
         'type':     GoObject,
         'const':    GoObject,
         'var':      GoObject,
     }
     roles = {
         'func' :  GoXRefRole(fix_parens=True),
-        'member': GoXRefRole(),
-        'macro':  GoXRefRole(),
         'data':   GoXRefRole(),
         'type':   GoXRefRole(),
     }

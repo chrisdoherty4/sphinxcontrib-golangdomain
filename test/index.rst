@@ -9,13 +9,13 @@ acceptance test of golangdomain
 C language
 ----------
 
-.. go:var:: FooObject* FooClass_Type
+.. c:var:: FooObject* FooClass_Type
 
-.. go:type:: BarStruct
+.. c:type:: BarStruct
 
-.. go:function:: int function_one(FooObject *foo)
+.. c:function:: int function_one(FooObject *foo)
 
-.. go:function:: float function_two(FooObject foo, Bar_size_t size)
+.. c:function:: float function_two(FooObject foo, Bar_size_t size)
 
 
 
@@ -36,7 +36,7 @@ Go language
 
 .. go:function:: func FuncFour(spam, egg uint)
 
-.. go:function:: func FuncFive() string
+.. go:function:: func FuncFive() []string
 
 .. go:function:: func FuncSix() (string, error)
 
@@ -44,7 +44,7 @@ Go language
 
 .. go:function:: func (Foo) MethodOne()
 
-.. go:function:: func (Foo) MethodTwo(spam int)
+.. go:function:: func (Foo) MethodTwo(spam []int)
 
 .. go:function:: func (Foo) MethodThree(spam string, egg uint)
 
@@ -58,7 +58,7 @@ Go language
 
 .. go:function:: func main.PackageFuncOne()
 
-.. go:function:: func main.PackageFuncTwo(foo int)
+.. go:function:: func main.PackageFuncTwo(foo FooStruct)
 
 .. go:function:: func main.PackageFuncThree(spam string, egg unit)
 
