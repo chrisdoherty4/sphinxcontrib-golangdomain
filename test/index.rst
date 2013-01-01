@@ -56,6 +56,19 @@ Go language
 
 .. go:function:: func (Foo) MethodSeven() (string, int, error)
 
+.. go:function:: func main.PackageFuncOne()
+
+.. go:function:: func main.PackageFuncTwo(foo int)
+
+.. go:function:: func main.PackageFuncThree(spam string, egg unit)
+
+.. go:function:: func main.PackageFuncFour(spam, egg uint)
+
+.. go:function:: func main.PackageFuncFive() string
+
+.. go:function:: func main.PackageFuncSix() (string, error)
+
+.. go:function:: func main.PackageFuncSeven() (string, int, error)
 
 
 Indices and tables

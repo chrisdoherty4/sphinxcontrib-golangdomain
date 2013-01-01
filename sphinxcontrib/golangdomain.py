@@ -33,13 +33,14 @@ go_sig_re = re.compile(
         (?: \((.*)\) )?    # optionally arguments
         (\s+const)? $      # const specifier
     ''', re.VERBOSE)
-go_funcptr_sig_re = re.compile(
-    r'''^([^(]+?)          # return type
-        (\( [^()]+ \)) \s* # name in parentheses
-        \( (.*) \)         # arguments
-        (\s+const)? $      # const specifier
+
+go_func_sig_re = re.compile(
+    r'''^(\s* func \s*)           # func
+         (?: \((.*)\) )? \s*      # struct/interface name
+         ([\w_.]+)                # thing name
+         \( ([\w\s,]*) \) \s*     # arguments
+         ([\w\s(),]*) \s* $       # optionally return type
     ''', re.VERBOSE)
-go_funcptr_name_re = re.compile(r'^\(\s*\*\s*(.*?)\s*\)$')
 
 
 class GoObject(ObjectDescription):
@@ -78,12 +79,13 @@ class GoObject(ObjectDescription):
     def handle_signature(self, sig, signode):
         """Transform a Go signature into RST nodes."""
         # first try the function pointer signature regex, it's more specific
-        m = go_funcptr_sig_re.match(sig)
-        if m is None:
-            m = go_sig_re.match(sig)
+        m = go_sig_re.match(sig)
+        print "handle_signature:\nsig -> %s\n" % (sig,)
+
         if m is None:
             raise ValueError('no match')
         rettype, name, arglist, const = m.groups()
+        print "handle_signature:\nrettype -> %s\nname->%s\narglist->%s\nconst->%s\n\n" % (rettype, name, arglist, const)
 
         signode += addnodes.desc_type('', '')
         self._parse_type(signode[-1], rettype)
@@ -95,10 +97,6 @@ class GoObject(ObjectDescription):
             # name (the full name) is still both parts
         except ValueError:
             signode += addnodes.desc_name(name, name)
-        # clean up parentheses from canonical name
-        m = go_funcptr_name_re.match(name)
-        if m:
-            name = m.group(1)
 
         typename = self.env.temp_data.get('go:type')
         if self.name == 'go:member' and typename:
