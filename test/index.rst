@@ -67,10 +67,10 @@ Test Case - Access without package name in the same package
 :go:func:`(Bar) MethodEight`
 
 
-.. go:package dummy_package
+.. go:package:: dummy_package
 
-Test Case - Access with package name in other packages
-------------------------------------------------------
+Test Case - Access with package name in other packages (dummy_package)
+----------------------------------------------------------------------
 
 .. go:type:: Spam
 
@@ -92,9 +92,9 @@ Test Case - Access with package name in other packages
 
 following items should not be linked as current package is 'dummy_package'.
 
-.. :go:func:`Spam`
+:go:type:`Spam`
 
-.. :go:func:`FuncOne`
+:go:func:`FuncOne`
 
 
 C language (for debug use)

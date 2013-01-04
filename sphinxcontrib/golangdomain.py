@@ -199,9 +199,6 @@ class GolangObject(ObjectDescription):
 
 
     def add_target_and_index(self, name, sig, signode):
-        # debug
-        print "add_target_and_index: (name, cur_pkg) = (%s, %s)\n" % (name, self.env.domaindata)
-
         if name not in self.state.document.ids:
             signode['names'].append(name)
             signode['ids'].append(name)
@@ -454,8 +451,6 @@ class GolangDomain(Domain):
         """Find a Go object for "name", perhaps using the given package.
         Returns a list of (name, object entry) tuples.
         """
-        print "_find_obj: (env, pkgname, name, typ) = (%s, %s, %s, %s)\n" % (env.currmodule, pkgname, name, typ)
-
         if typ == 'func':
             return self._find_func(env, pkgname, name)
 
