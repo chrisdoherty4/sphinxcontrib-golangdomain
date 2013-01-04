@@ -92,7 +92,7 @@ class GolangObject(ObjectDescription):
         # determine package name, as well as full name
         # default package is 'builtin'
         env_pkgname = self.options.get(
-            'module', self.env.temp_data.get('go:module', 'builtin'))
+            'module', self.env.temp_data.get('go:package', 'builtin'))
 
         name, = m.groups()
         if '.' in name:
@@ -122,7 +122,7 @@ class GolangObject(ObjectDescription):
         # determine package name, as well as full name
         # default package is 'builtin'
         env_pkgname = self.options.get(
-            'module', self.env.temp_data.get('go:module', 'builtin'))
+            'module', self.env.temp_data.get('go:package', 'builtin'))
 
         # debug
         print "\t_resolve_package_name:\n\t%s, %s\n" % (struct, name)
@@ -268,7 +268,7 @@ class GolangPackage(Directive):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
         noindex = 'noindex' in self.options
-        env.temp_data['go:module'] = modname
+        env.temp_data['go:package'] = modname
         env.domaindata['go']['modules'][modname] = \
             (env.docname, self.options.get('synopsis', ''),
              self.options.get('platform', ''), 'deprecated' in self.options)
@@ -307,15 +307,15 @@ class GolangCurrentPackage(Directive):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
         if modname == 'None':
-            env.temp_data['go:module'] = None
+            env.temp_data['go:package'] = None
         else:
-            env.temp_data['go:module'] = modname
+            env.temp_data['go:package'] = modname
         return []
 
 
 class GolangXRefRole(XRefRole):
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode['go:module'] = env.temp_data.get('go:module')
+        refnode['go:package'] = env.temp_data.get('go:package')
         if not has_explicit_title:
             title = title.lstrip('.')   # only has a meaning for the target
             target = target.lstrip('~') # only has a meaning for the title
@@ -404,7 +404,7 @@ class GolangDomain(Domain):
     label = 'Golang'
     object_types = {
         'function': ObjType(l_('function'), 'func'),
-        'module':   ObjType(l_('module'),   'mod'),    # TODO(ymotongpoo): change to package
+        'package':  ObjType(l_('package'),  'pkg'),
         'type':     ObjType(l_('function'), 'type'),
         'var':      ObjType(l_('variable'), 'data'),
         'const':    ObjType(l_('const'),    'data'),
@@ -415,12 +415,12 @@ class GolangDomain(Domain):
         'type':          GolangObject,
         'var':           GolangObject,
         'const':         GolangObject,
-        'module':        GolangPackage,
-        'currentmodule': GolangCurrentPackage,
+        'package':       GolangPackage,
+        'currentpackage': GolangCurrentPackage,
     }
     roles = {
         'func' :  GolangXRefRole(),
-        'mod':    GolangXRefRole(),
+        'pkg':    GolangXRefRole(),
         'type':   GolangXRefRole(),
         'data':   GolangXRefRole(),
     }
@@ -504,7 +504,7 @@ class GolangDomain(Domain):
                 return make_refnode(builder, fromdocname, docname,
                                     'module-' + target, contnode, title)
         else:
-            modname = node.get('go:module')
+            modname = node.get('go:package')
             name, obj = self._find_obj(env, modname, target, typ)
             if not obj:
                 return None

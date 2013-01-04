@@ -12,7 +12,7 @@ Go language
 Package 'foo'
 ~~~~~~~~~~~~~
 
-.. go:module:: foo
+.. go:package:: foo
 
 .. go:const:: ConstTest
 
@@ -67,10 +67,12 @@ Test Case - Access without package name in the same package
 :go:func:`(Bar) MethodEight`
 
 
-.. go:module dummy_package
+.. go:package dummy_package
 
 Test Case - Access with package name in other packages
 ------------------------------------------------------
+
+:go:pkg:`foo`
 
 :go:data:`foo.ConstTest`
 
