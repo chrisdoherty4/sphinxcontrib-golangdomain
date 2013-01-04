@@ -13,7 +13,7 @@ requires = ['Sphinx>=1.0']
 
 setup(
     name='sphinxcontrib-golangdomain',
-    version='0.1.0',
+    version='0.1.1',
     url='http://bitbucket.org/ymotongpoo/sphinxcontrib-golangdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-golangdomain',
     license='BSD',
@@ -30,7 +30,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Go',
         'Topic :: Documentation',
         'Topic :: Utilities',
     ],
