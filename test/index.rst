@@ -22,6 +22,11 @@ C language
 Go language
 -----------
 
+Package 'foo'
+~~~~~~~~~~~~~
+
+.. go:module:: foo
+
 .. go:const:: ConstTest
 
 .. go:var:: VariableTest
@@ -58,23 +63,9 @@ Go language
 
 .. go:function:: func (b Bar) MethodEight()
 
-.. go:function:: func main.PackageFuncOne()
 
-.. go:function:: func main.PackageFuncTwo(foo FooStruct)
-
-.. go:function:: func main.PackageFuncThree(spam string, egg unit)
-
-.. go:function:: func main.PackageFuncFour(spam, egg uint)
-
-.. go:function:: func main.PackageFuncFive() string
-
-.. go:function:: func main.PackageFuncSix() (string, error)
-
-.. go:function:: func main.PackageFuncSeven() (string, int, error)
-
-
-Reference
----------
+Test Case - Access without package name in the same package
+-----------------------------------------------------------
 
 :go:data:`ConstTest`
 
@@ -86,10 +77,27 @@ Reference
 
 :go:func:`(Foo) MethodOne`
 
-:go:func:`(Bar) MethodEight()`
+:go:func:`(Bar) MethodEight`
 
-:go:func:`main.PackageFuncSeven`
 
+.. go:module dummy_package
+
+Test Case - Access with package name in other packages
+------------------------------------------------------
+
+:go:data:`foo.ConstTest`
+
+:go:data:`foo.VariableTest`
+
+:go:type:`foo.Spam`
+
+:go:func:`foo.FuncOne`
+
+:go:func:`(foo.Foo) MethodOne`
+
+:go:func:`(foo.Bar) MethodEight`
+
+:c:func:`function_one`
 
 Indices and tables
 ==================
