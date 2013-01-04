@@ -47,16 +47,6 @@ go_func_split_re = re.compile(
          ([\w.]+)                  # function name
     ''', re.VERBOSE)
 
-
-erl_func_sig_re = re.compile(
-    r'''^ ([\w.]*:)?             # module name
-          (\w+)  \s*             # thing name
-          (?: \((.*)\)           # optional: arguments
-           (?:\s* -> \s* (.*))?  #           return annotation
-          )? $                   # and nothing more
-          ''', re.VERBOSE)
-
-
 class GolangObject(ObjectDescription):
     """
     Description of a Golang language object.
@@ -92,7 +82,7 @@ class GolangObject(ObjectDescription):
         # determine package name, as well as full name
         # default package is 'builtin'
         env_pkgname = self.options.get(
-            'module', self.env.temp_data.get('go:module', 'builtin'))
+            'package', self.env.temp_data.get('go:package', 'builtin'))
 
         name, = m.groups()
         if '.' in name:
@@ -122,7 +112,7 @@ class GolangObject(ObjectDescription):
         # determine package name, as well as full name
         # default package is 'builtin'
         env_pkgname = self.options.get(
-            'module', self.env.temp_data.get('go:module', 'builtin'))
+            'package', self.env.temp_data.get('go:package', 'builtin'))
 
         # debug
         print "\t_resolve_package_name:\n\t%s, %s\n" % (struct, name)
@@ -144,10 +134,10 @@ class GolangObject(ObjectDescription):
             try:
                 pkgname, typename = typ.split('.', 1)
                 fullname = "(%s.%s) %s" % (pkgname, typename, name)
-                signode['module'] = pkgname
+                signode['package'] = pkgname
             except ValueError:
                 fullname = "(%s.%s) %s" % (env_pkgname, typ, name)
-                signode['module'] = env_pkgname
+                signode['package'] = env_pkgname
         else:
             try:
                 pkgname, funcname = name.split('.', 1)
@@ -157,7 +147,7 @@ class GolangObject(ObjectDescription):
                 funcname = name
             name_prefix = pkgname + '.'
             fullname = "%s.%s" % (pkgname, funcname)
-            signode['module'] = pkgname
+            signode['package'] = pkgname
             signode += addnodes.desc_name(name_prefix, name_prefix)
             # debug
             print "\t\t_resolve:\n\t\t(pkgname, funcname, name, name_prefix) = (%s, %s, %s, %s)\n" % (pkgname, funcname, name, name_prefix)
@@ -214,6 +204,7 @@ class GolangObject(ObjectDescription):
         else:
             return ''
 
+
     def add_target_and_index(self, name, sig, signode):
         # debug
         print "add_target_and_index:\ndocname = %s\n" % (self.env.docname,)
@@ -250,7 +241,7 @@ class GolangObject(ObjectDescription):
 
 class GolangPackage(Directive):
     """
-    Directive to mark description of a new module.
+    Directive to mark description of a new package.
     """
 
     has_content = False
@@ -266,16 +257,16 @@ class GolangPackage(Directive):
 
     def run(self):
         env = self.state.document.settings.env
-        modname = self.arguments[0].strip()
+        pkgname = self.arguments[0].strip()
         noindex = 'noindex' in self.options
-        env.temp_data['go:module'] = modname
-        env.domaindata['go']['modules'][modname] = \
+        env.temp_data['go:package'] = pkgname
+        env.domaindata['go']['packages'][pkgname] = \
             (env.docname, self.options.get('synopsis', ''),
              self.options.get('platform', ''), 'deprecated' in self.options)
-        targetnode = nodes.target('', '', ids=['module-' + modname], ismod=True)
+        targetnode = nodes.target('', '', ids=['package-' + pkgname], ismod=True)
         self.state.document.note_explicit_target(targetnode)
         ret = [targetnode]
-        # XXX this behavior of the module directive is a mess...
+        # XXX this behavior of the package directive is a mess...
         if 'platform' in self.options:
             platform = self.options['platform']
             node = nodes.paragraph()
@@ -283,11 +274,11 @@ class GolangPackage(Directive):
             node += nodes.Text(platform, platform)
             ret.append(node)
         # the synopsis isn't printed; in fact, it is only used in the
-        # modindex currently
+        # pkgindex currently
         if not noindex:
-            indextext = _('%s (package)') % modname
+            indextext = _('%s (package)') % pkgname
             inode = addnodes.index(entries=[('single', indextext,
-                                             'module-' + modname, modname)])
+                                             'package-' + pkgname, pkgname)])
             ret.append(inode)
         return ret
 
@@ -295,7 +286,7 @@ class GolangPackage(Directive):
 class GolangCurrentPackage(Directive):
     """
     This directive is just to tell Sphinx that we're documenting
-    stuff in module foo, but links to module foo won't lead here.
+    stuff in package foo, but links to package foo won't lead here.
     """
     has_content = False
     required_arguments = 1
@@ -305,21 +296,21 @@ class GolangCurrentPackage(Directive):
 
     def run(self):
         env = self.state.document.settings.env
-        modname = self.arguments[0].strip()
-        if modname == 'None':
-            env.temp_data['go:module'] = None
+        pkgname = self.arguments[0].strip()
+        if pkgname == 'None':
+            env.temp_data['go:package'] = None
         else:
-            env.temp_data['go:module'] = modname
+            env.temp_data['go:package'] = pkgname
         return []
 
 
 class GolangXRefRole(XRefRole):
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode['go:module'] = env.temp_data.get('go:module')
+        refnode['go:package'] = env.temp_data.get('go:package')
         if not has_explicit_title:
             title = title.lstrip('.')   # only has a meaning for the target
             target = target.lstrip('~') # only has a meaning for the title
-            # if the first character is a tilde, don't display the module/class
+            # if the first character is a tilde, don't display the package
             # parts of the contents
             if title[0:1] == '~':
                 title = title[1:]
@@ -331,7 +322,7 @@ class GolangXRefRole(XRefRole):
 
 class GolangPackageIndex(Index):
     """
-    Index subclass to provide the Golang module index.
+    Index subclass to provide the Golang package index.
     """
 
     name = 'pkgindex'
@@ -343,38 +334,38 @@ class GolangPackageIndex(Index):
         # list of prefixes to ignore
         ignores = self.domain.env.config['modindex_common_prefix']
         ignores = sorted(ignores, key=len, reverse=True)
-        # list of all modules, sorted by module name
-        modules = sorted(self.domain.data['modules'].iteritems(),
+        # list of all packages, sorted by package name
+        packages = sorted(self.domain.data['packages'].iteritems(),
                          key=lambda x: x[0].lower())
-        # sort out collapsable modules
-        prev_modname = ''
+        # sort out collapsable packages
+        prev_pkgname = ''
         num_toplevels = 0
-        for modname, (docname, synopsis, platforms, deprecated) in modules:
+        for pkgname, (docname, synopsis, platforms, deprecated) in packages:
             if docnames and docname not in docnames:
                 continue
 
             for ignore in ignores:
-                if modname.startswith(ignore):
-                    modname = modname[len(ignore):]
+                if pkgname.startswith(ignore):
+                    pkgname = pkgname[len(ignore):]
                     stripped = ignore
                     break
             else:
                 stripped = ''
 
-            # we stripped the whole module name?
-            if not modname:
-                modname, stripped = stripped, ''
+            # we stripped the whole package name?
+            if not pkgname:
+                pkgname, stripped = stripped, ''
 
-            entries = content.setdefault(modname[0].lower(), [])
+            entries = content.setdefault(pkgname[0].lower(), [])
 
-            package = modname.split('.')[0]
-            if package != modname:
-                # it's a submodule
-                if prev_modname == package:
-                    # first submodule - make parent a group head
+            package = pkgname.split('.')[0]
+            if package != pkgname:
+                # it's a subpackage
+                if prev_pkgname == package:
+                    # first subpackage - make parent a group head
                     entries[-1][1] = 1
-                elif not prev_modname.startswith(package):
-                    # submodule without parent in list, add dummy entry
+                elif not prev_pkgname.startswith(package):
+                    # subpackage without parent in list, add dummy entry
                     entries.append([stripped + package, 1, '', '', '', '', ''])
                 subtype = 2
             else:
@@ -382,15 +373,15 @@ class GolangPackageIndex(Index):
                 subtype = 0
 
             qualifier = deprecated and _('Deprecated') or ''
-            entries.append([stripped + modname, subtype, docname,
-                            'module-' + stripped + modname, platforms,
+            entries.append([stripped + pkgname, subtype, docname,
+                            'package-' + stripped + pkgname, platforms,
                             qualifier, synopsis])
-            prev_modname = modname
+            prev_pkgname = pkgname
 
-        # apply heuristics when to collapse modindex at page load:
-        # only collapse if number of toplevel modules is larger than
-        # number of submodules
-        collapse = len(modules) - num_toplevels < num_toplevels
+        # apply heuristics when to collapse pkgindex at page load:
+        # only collapse if number of toplevel packages is larger than
+        # number of subpackages
+        collapse = len(packages) - num_toplevels < num_toplevels
 
         # sort by first letter
         content = sorted(content.iteritems())
@@ -404,9 +395,7 @@ class GolangDomain(Domain):
     label = 'Golang'
     object_types = {
         'function': ObjType(l_('function'), 'func'),
-        'macro':    ObjType(l_('macro'),    'macro'),
-        'record':   ObjType(l_('record'),   'record'),
-        'module':   ObjType(l_('module'),   'mod'),    # TODO(ymotongpoo): change to package
+        'package':  ObjType(l_('package'),  'pkg'),
         'type':     ObjType(l_('function'), 'type'),
         'var':      ObjType(l_('variable'), 'data'),
         'const':    ObjType(l_('const'),    'data'),
@@ -414,26 +403,22 @@ class GolangDomain(Domain):
 
     directives = {
         'function':      GolangObject,
-        'macro':         GolangObject,
-        'record':        GolangObject,
         'type':          GolangObject,
         'var':           GolangObject,
         'const':         GolangObject,
-        'module':        GolangPackage,
-        'currentmodule': GolangCurrentPackage,
+        'package':       GolangPackage,
+        'currentpackage': GolangCurrentPackage,
     }
     roles = {
         'func' :  GolangXRefRole(),
-        'macro':  GolangXRefRole(),
-        'record': GolangXRefRole(),
-        'mod':    GolangXRefRole(),
+        'pkg':    GolangXRefRole(),
         'type':   GolangXRefRole(),
         'data':   GolangXRefRole(),
     }
     initial_data = {
         'objects': {},    # fullname -> docname, objtype
         'functions' : {}, # fullname -> targetname, docname
-        'modules': {},    # modname -> docname, synopsis, platform, deprecated
+        'packages': {},    # pkgname -> docname, synopsis, platform, deprecated
     }
     indices = [
         GolangPackageIndex,
@@ -443,16 +428,11 @@ class GolangDomain(Domain):
         for fullname, (fn, _) in self.data['objects'].items():
             if fn == docname:
                 del self.data['objects'][fullname]
-        for modname, (fn, _, _, _) in self.data['modules'].items():
+        for pkgname, (fn, _, _, _) in self.data['packages'].items():
             if fn == docname:
-                del self.data['modules'][modname]
+                del self.data['packages'][pkgname]
         for fullname, funcs in self.data['functions'].items():
-            print "funcs:\n%s, %s\n" % (fullname, funcs)
-            # debug
-            for arity, (fn, _) in funcs.items():
-                if fn == docname:
-                    del self.data['functions'][fullname][arity]
-            if not self.data['functions'][fullname]:
+            if fn == docname:
                 del self.data['functions'][fullname]
 
     def _find_func(self, env, pkgname, name):
@@ -503,9 +483,9 @@ class GolangDomain(Domain):
 
     def resolve_xref(self, env, fromdocname, builder,
                      typ, target, node, contnode):
-        if typ == 'mod' and target in self.data['modules']:
+        if typ == 'pkg' and target in self.data['packages']:
             docname, synopsis, platform, deprecated = \
-                self.data['modules'].get(target, ('','','', ''))
+                self.data['packages'].get(target, ('','','', ''))
             if not docname:
                 return None
             else:
@@ -513,10 +493,10 @@ class GolangDomain(Domain):
                                     synopsis,
                                     (deprecated and ' (deprecated)' or ''))
                 return make_refnode(builder, fromdocname, docname,
-                                    'module-' + target, contnode, title)
+                                    'package-' + target, contnode, title)
         else:
-            modname = node.get('go:module')
-            name, obj = self._find_obj(env, modname, target, typ)
+            pkgname = node.get('go:package')
+            name, obj = self._find_obj(env, pkgname, target, typ)
             if not obj:
                 return None
             else:
