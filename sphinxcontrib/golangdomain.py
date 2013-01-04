@@ -47,6 +47,7 @@ go_func_split_re = re.compile(
          ([\w.]+)                  # function name
     ''', re.VERBOSE)
 
+
 class GolangObject(ObjectDescription):
     """
     Description of a Golang language object.
@@ -77,6 +78,7 @@ class GolangObject(ObjectDescription):
         m = go_sig_re.match(sig)
         if m is not None:
             return self._handle_general_signature(sig, signode, m)
+
         
     def _handle_general_signature(self, sig, signode, m):
         # determine package name, as well as full name
@@ -86,14 +88,17 @@ class GolangObject(ObjectDescription):
 
         name, = m.groups()
         if '.' in name:
-            signode += addnodes.desc_name(name, name)
+            pkgname, funcname = name.split('.', 1)
+            name_prefix = pkgname + '.'
+            signode += addnodes.desc_addname(name_prefix, name_prefix)
+            signode += addnodes.desc_name(funcname, funcname)
             fullname = name
         else:
             fullname = "%s.%s" % (env_pkgname, name)
-            signode += addnodes.desc_name(fullname, fullname)
-            
+            signode += addnodes.desc_name(name, name)
         return fullname
 
+    
     def _parse_type(self, node, gotype):
         # add cross-ref nodes for all words
         for part in filter(None, wsplit_re.split(gotype)):
@@ -108,6 +113,7 @@ class GolangObject(ObjectDescription):
             else:
                 node += tnode
 
+
     def _resolve_package_name(self, signode, struct, name):
         # determine package name, as well as full name
         # default package is 'builtin'
@@ -116,9 +122,6 @@ class GolangObject(ObjectDescription):
 
         fullname = ""
         if struct:
-            # debug
-            print ("\t\t_resolve:\n\t\tstruct = %s\n" % struct)
-
             signode += addnodes.desc_addname("(", "(")
             try:
                 arg, typ = struct.split(' ', 1)
@@ -139,16 +142,17 @@ class GolangObject(ObjectDescription):
             try:
                 pkgname, funcname = name.split('.', 1)
                 name = funcname
+                name_prefix = pkgname + '.'
+                signode += addnodes.desc_name(name_prefix, name_prefix)
             except ValueError:
                 pkgname = env_pkgname
                 funcname = name
-            name_prefix = pkgname + '.'
             fullname = "%s.%s" % (pkgname, funcname)
             signode['package'] = pkgname
-            signode += addnodes.desc_name(name_prefix, name_prefix)
 
         signode += addnodes.desc_name(name, name)
         return fullname
+
 
     def _handle_function_signature(self, sig, signode, m):
         if m is None:
@@ -180,7 +184,6 @@ class GolangObject(ObjectDescription):
 
         if retann:
             signode += addnodes.desc_returns(retann, retann)
-
         return fullname
 
 
@@ -424,6 +427,7 @@ class GolangDomain(Domain):
             if fn == docname:
                 del self.data['functions'][fullname]
 
+
     def _find_func(self, env, pkgname, name):
         m = go_func_split_re.match(name)
         if m is None:
@@ -432,7 +436,6 @@ class GolangDomain(Domain):
             else:
                 fullname = "%s.%s" % (pkgname, name)
         else:
-            print "%s -> %s\n" % (name, m.groups())
             typename, funcname = m.groups()
             try:
                 _, typ = typename.split(' ', 1)
@@ -484,6 +487,7 @@ class GolangDomain(Domain):
             else:
                 return make_refnode(builder, fromdocname, obj, name,
                                     contnode, name)
+
 
     def get_objects(self):
         for refname, (docname, type) in self.data['objects'].iteritems():
