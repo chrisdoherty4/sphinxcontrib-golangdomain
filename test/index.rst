@@ -6,19 +6,6 @@
 acceptance test of golangdomain
 ===============================
 
-C language
-----------
-
-.. c:var:: FooObject* FooClass_Type
-
-.. c:type:: BarStruct
-
-.. c:function:: int function_one(FooObject *foo)
-
-.. c:function:: float function_two(FooObject foo, Bar_size_t size)
-
-
-
 Go language
 -----------
 
@@ -97,7 +84,24 @@ Test Case - Access with package name in other packages
 
 :go:func:`(foo.Bar) MethodEight`
 
+
+C language (for debug use)
+--------------------------
+
+.. c:var:: FooObject* FooClass_Type
+
+.. c:type:: BarStruct
+
+.. c:function:: int function_one(FooObject *foo)
+
+.. c:function:: float function_two(FooObject foo, Bar_size_t size)
+
+
+:c:type:`BarStruct`
+
 :c:func:`function_one`
+
+
 
 Indices and tables
 ==================
