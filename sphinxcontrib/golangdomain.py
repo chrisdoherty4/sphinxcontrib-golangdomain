@@ -114,9 +114,6 @@ class GolangObject(ObjectDescription):
         env_pkgname = self.options.get(
             'package', self.env.temp_data.get('go:package', 'builtin'))
 
-        # debug
-        print "\t_resolve_package_name:\n\t%s, %s\n" % (struct, name)
-
         fullname = ""
         if struct:
             # debug
@@ -149,8 +146,6 @@ class GolangObject(ObjectDescription):
             fullname = "%s.%s" % (pkgname, funcname)
             signode['package'] = pkgname
             signode += addnodes.desc_name(name_prefix, name_prefix)
-            # debug
-            print "\t\t_resolve:\n\t\t(pkgname, funcname, name, name_prefix) = (%s, %s, %s, %s)\n" % (pkgname, funcname, name, name_prefix)
 
         signode += addnodes.desc_name(name, name)
         return fullname
@@ -159,9 +154,6 @@ class GolangObject(ObjectDescription):
         if m is None:
             raise ValueError
         struct, name, arglist, retann = m.groups()
-        # debug
-        print ("handle_func:\n(struct, name, arglist, rettype) = ('%s', '%s', '%s', '%s')\n" 
-               % (struct, name, arglist, retann))
         signode += addnodes.desc_addname("func ", "func"+u'\xa0')
         fullname = self._resolve_package_name(signode, struct, name)
 
@@ -206,9 +198,6 @@ class GolangObject(ObjectDescription):
 
 
     def add_target_and_index(self, name, sig, signode):
-        # debug
-        print "add_target_and_index:\ndocname = %s\n" % (self.env.docname,)
-
         if name not in self.state.document.ids:
             signode['names'].append(name)
             signode['ids'].append(name)
@@ -454,9 +443,6 @@ class GolangDomain(Domain):
             else:
                 fullname = "(%s.%s) %s" % (pkgname, typ, funcname)
         
-        # debug
-        print "_find_func:\n(fullname, data) = (%s, %s)\n" % (fullname, self.data['functions'])
-
         return fullname, self.data['functions'][fullname][0]
 
 
@@ -464,10 +450,6 @@ class GolangDomain(Domain):
         """Find a Go object for "name", perhaps using the given package.
         Returns a list of (name, object entry) tuples.
         """
-        # debug
-        print ("_find_obj:\n(env, pkgname, name, typ) = (%s, %s, %s, %s)\n" %
-               (env, pkgname, name, typ))
-
         if typ == 'func':
             return self._find_func(env, pkgname, name)
 
