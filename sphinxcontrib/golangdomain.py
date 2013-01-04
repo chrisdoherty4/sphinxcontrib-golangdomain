@@ -259,7 +259,7 @@ class GolangPackage(Directive):
         pkgname = self.arguments[0].strip()
         noindex = 'noindex' in self.options
         env.temp_data['go:package'] = pkgname
-        env.domaindata['go']['modules'][pkgname] = \
+        env.domaindata['go']['packages'][pkgname] = \
             (env.docname, self.options.get('synopsis', ''),
              self.options.get('platform', ''), 'deprecated' in self.options)
         targetnode = nodes.target('', '', ids=['package-' + pkgname], ismod=True)
@@ -334,7 +334,7 @@ class GolangPackageIndex(Index):
         ignores = self.domain.env.config['modindex_common_prefix']
         ignores = sorted(ignores, key=len, reverse=True)
         # list of all packages, sorted by package name
-        packages = sorted(self.domain.data['modules'].iteritems(),
+        packages = sorted(self.domain.data['packages'].iteritems(),
                          key=lambda x: x[0].lower())
         # sort out collapsable packages
         prev_pkgname = ''
@@ -417,7 +417,7 @@ class GolangDomain(Domain):
     initial_data = {
         'objects': {},    # fullname -> docname, objtype
         'functions' : {}, # fullname -> targetname, docname
-        'modules': {},    # pkgname -> docname, synopsis, platform, deprecated
+        'packages': {},    # pkgname -> docname, synopsis, platform, deprecated
     }
     indices = [
         GolangPackageIndex,
@@ -427,9 +427,9 @@ class GolangDomain(Domain):
         for fullname, (fn, _) in self.data['objects'].items():
             if fn == docname:
                 del self.data['objects'][fullname]
-        for pkgname, (fn, _, _, _) in self.data['modules'].items():
+        for pkgname, (fn, _, _, _) in self.data['packages'].items():
             if fn == docname:
-                del self.data['modules'][pkgname]
+                del self.data['packages'][pkgname]
         for fullname, funcs in self.data['functions'].items():
             if fn == docname:
                 del self.data['functions'][fullname]
@@ -482,9 +482,9 @@ class GolangDomain(Domain):
 
     def resolve_xref(self, env, fromdocname, builder,
                      typ, target, node, contnode):
-        if typ == 'pkg' and target in self.data['modules']:
+        if typ == 'pkg' and target in self.data['packages']:
             docname, synopsis, platform, deprecated = \
-                self.data['modules'].get(target, ('','','', ''))
+                self.data['packages'].get(target, ('','','', ''))
             if not docname:
                 return None
             else:
