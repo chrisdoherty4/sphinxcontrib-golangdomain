@@ -82,7 +82,7 @@ class GolangObject(ObjectDescription):
         # determine package name, as well as full name
         # default package is 'builtin'
         env_pkgname = self.options.get(
-            'module', self.env.temp_data.get('go:package', 'builtin'))
+            'package', self.env.temp_data.get('go:package', 'builtin'))
 
         name, = m.groups()
         if '.' in name:
@@ -112,7 +112,7 @@ class GolangObject(ObjectDescription):
         # determine package name, as well as full name
         # default package is 'builtin'
         env_pkgname = self.options.get(
-            'module', self.env.temp_data.get('go:package', 'builtin'))
+            'package', self.env.temp_data.get('go:package', 'builtin'))
 
         # debug
         print "\t_resolve_package_name:\n\t%s, %s\n" % (struct, name)
@@ -203,6 +203,7 @@ class GolangObject(ObjectDescription):
             return _('%s (Golang type)') % name
         else:
             return ''
+
 
     def add_target_and_index(self, name, sig, signode):
         # debug
