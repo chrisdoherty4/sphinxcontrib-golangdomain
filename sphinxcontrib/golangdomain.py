@@ -134,10 +134,10 @@ class GolangObject(ObjectDescription):
             try:
                 pkgname, typename = typ.split('.', 1)
                 fullname = "(%s.%s) %s" % (pkgname, typename, name)
-                signode['module'] = pkgname
+                signode['package'] = pkgname
             except ValueError:
                 fullname = "(%s.%s) %s" % (env_pkgname, typ, name)
-                signode['module'] = env_pkgname
+                signode['package'] = env_pkgname
         else:
             try:
                 pkgname, funcname = name.split('.', 1)
@@ -147,7 +147,7 @@ class GolangObject(ObjectDescription):
                 funcname = name
             name_prefix = pkgname + '.'
             fullname = "%s.%s" % (pkgname, funcname)
-            signode['module'] = pkgname
+            signode['package'] = pkgname
             signode += addnodes.desc_name(name_prefix, name_prefix)
             # debug
             print "\t\t_resolve:\n\t\t(pkgname, funcname, name, name_prefix) = (%s, %s, %s, %s)\n" % (pkgname, funcname, name, name_prefix)
