@@ -41,7 +41,6 @@ go_sig_re = re.compile(
     r'''^(\w+)                     # thing name
     ''', re.VERBOSE)
 
-
 go_func_split_re = re.compile(
     r'''^\( (.*) \) \s*            # struct/interface name
          ([\w.]+)                  # function name
@@ -52,7 +51,6 @@ class GolangObject(ObjectDescription):
     """
     Description of a Golang language object.
     """
-
     doc_field_types = [
         TypedField('parameter', label=l_('Parameters'),
                    names=('param', 'parameter', 'arg', 'argument'),
