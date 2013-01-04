@@ -404,8 +404,6 @@ class GolangDomain(Domain):
     label = 'Golang'
     object_types = {
         'function': ObjType(l_('function'), 'func'),
-        'macro':    ObjType(l_('macro'),    'macro'),
-        'record':   ObjType(l_('record'),   'record'),
         'module':   ObjType(l_('module'),   'mod'),    # TODO(ymotongpoo): change to package
         'type':     ObjType(l_('function'), 'type'),
         'var':      ObjType(l_('variable'), 'data'),
@@ -414,8 +412,6 @@ class GolangDomain(Domain):
 
     directives = {
         'function':      GolangObject,
-        'macro':         GolangObject,
-        'record':        GolangObject,
         'type':          GolangObject,
         'var':           GolangObject,
         'const':         GolangObject,
@@ -424,8 +420,6 @@ class GolangDomain(Domain):
     }
     roles = {
         'func' :  GolangXRefRole(),
-        'macro':  GolangXRefRole(),
-        'record': GolangXRefRole(),
         'mod':    GolangXRefRole(),
         'type':   GolangXRefRole(),
         'data':   GolangXRefRole(),
@@ -447,12 +441,7 @@ class GolangDomain(Domain):
             if fn == docname:
                 del self.data['modules'][modname]
         for fullname, funcs in self.data['functions'].items():
-            print "funcs:\n%s, %s\n" % (fullname, funcs)
-            # debug
-            for arity, (fn, _) in funcs.items():
-                if fn == docname:
-                    del self.data['functions'][fullname][arity]
-            if not self.data['functions'][fullname]:
+            if fn == docname:
                 del self.data['functions'][fullname]
 
     def _find_func(self, env, pkgname, name):
