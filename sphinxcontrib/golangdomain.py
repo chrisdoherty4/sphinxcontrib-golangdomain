@@ -32,8 +32,8 @@ go_func_sig_re = re.compile(
     r'''^\s* func \s*              # func (ignore)
          (?: \((.*)\) )? \s*       # struct/interface name
          ([\w.]+)                  # thing name
-         \( ([\w\s\[\],]*) \) \s*  # arguments
-         ([\w\s\[\](),]*) \s* $    # optionally return type
+         \( ([\w\s\[\](),.*]*) \) \s*  # arguments
+         ([\w\s\[\](),.*]*) \s* $    # optionally return type
     ''', re.VERBOSE)
 
 go_sig_re = re.compile(

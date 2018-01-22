@@ -34,6 +34,8 @@ Package 'foo'
 
 .. go:function:: func FuncSeven() (string, int, error)
 
+.. go:function:: func FuncEight() (*func(int) bool, io.Reader) *io.Writer
+
 .. go:function:: func (Foo) MethodOne()
 
 .. go:function:: func (Foo) MethodTwo(spam []int)
