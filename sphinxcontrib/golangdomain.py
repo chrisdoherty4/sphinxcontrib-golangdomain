@@ -414,16 +414,19 @@ class GolangDomain(Domain):
     ]
 
     def clear_doc(self, docname):
-        for fullname, (fn, _) in self.data['objects'].items():
+        for fullname in list(self.data['objects'].keys()):
+            fn, _ = self.data['objects'].get(fullname)
             if fn == docname:
-                del self.data['objects'][fullname]
-        for pkgname, (fn, _, _, _) in self.data['packages'].items():
+                self.data['objects'].pop(fullname)
+        for pkgname in list(self.data['packages'].keys()):
+            fn, _, _, _ = self.data['packages'].get(pkgname)
             if fn == docname:
-                del self.data['packages'][pkgname]
-        for fullname, funcs in self.data['functions'].items():
-            if fn == docname:
-                del self.data['functions'][fullname]
-
+                self.data['packages'].pop(pkgname)
+        for fullname in list(self.data['functions'].keys()):
+            funcs = self.data['functions'].get(fullname)
+            for fn in funcs:
+                if fn == docname:
+                    self.data['functions'].pop(fullname)
 
     def _find_func(self, env, pkgname, name):
         m = go_func_split_re.match(name)
