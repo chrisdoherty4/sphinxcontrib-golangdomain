@@ -17,7 +17,7 @@ from docutils.parsers.rst import directives, Directive
 
 from sphinx import addnodes
 from sphinx.roles import XRefRole
-from sphinx.locale import l_, _
+from sphinx.locale import _
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.util.nodes import make_refnode
@@ -51,12 +51,12 @@ class GolangObject(ObjectDescription):
     Description of a Golang language object.
     """
     doc_field_types = [
-        TypedField('parameter', label=l_('Parameters'),
+        TypedField('parameter', label=_('Parameters'),
                    names=('param', 'parameter', 'arg', 'argument'),
                    typerolename='type', typenames=('type',)),
-        Field('returnvalue', label=l_('Returns'), has_arg=False,
+        Field('returnvalue', label=_('Returns'), has_arg=False,
               names=('returns', 'return')),
-        Field('returntype', label=l_('Return type'), has_arg=False,
+        Field('returntype', label=_('Return type'), has_arg=False,
               names=('rtype',)),
     ]
 
@@ -315,8 +315,8 @@ class GolangPackageIndex(Index):
     """
 
     name = 'pkgindex'
-    localname = l_('Golang Package Index')
-    shortname = l_('packages')
+    localname =_('Golang Package Index')
+    shortname =_('packages')
 
     def generate(self, docnames=None):
         content = {}
@@ -383,11 +383,11 @@ class GolangDomain(Domain):
     name = 'go'
     label = 'Golang'
     object_types = {
-        'function': ObjType(l_('function'), 'func'),
-        'package':  ObjType(l_('package'),  'pkg'),
-        'type':     ObjType(l_('function'), 'type'),
-        'var':      ObjType(l_('variable'), 'data'),
-        'const':    ObjType(l_('const'),    'data'),
+        'function': ObjType(_('function'), 'func'),
+        'package':  ObjType(_('package'),  'pkg'),
+        'type':     ObjType(_('function'), 'type'),
+        'var':      ObjType(_('variable'), 'data'),
+        'const':    ObjType(_('const'),    'data'),
     }
 
     directives = {
@@ -398,17 +398,20 @@ class GolangDomain(Domain):
         'package':       GolangPackage,
         'currentpackage': GolangCurrentPackage,
     }
+
     roles = {
         'func' :  GolangXRefRole(),
         'pkg':    GolangXRefRole(),
         'type':   GolangXRefRole(),
         'data':   GolangXRefRole(),
     }
+
     initial_data = {
         'objects': {},    # fullname -> docname, objtype
         'functions' : {}, # fullname -> targetname, docname
         'packages': {},    # pkgname -> docname, synopsis, platform, deprecated
     }
+
     indices = [
         GolangPackageIndex,
     ]
@@ -418,10 +421,12 @@ class GolangDomain(Domain):
             fn, _ = self.data['objects'].get(fullname)
             if fn == docname:
                 self.data['objects'].pop(fullname)
+
         for pkgname in list(self.data['packages'].keys()):
             fn, _, _, _ = self.data['packages'].get(pkgname)
             if fn == docname:
                 self.data['packages'].pop(pkgname)
+
         for fullname in list(self.data['functions'].keys()):
             funcs = self.data['functions'].get(fullname)
             for fn in funcs:
@@ -441,6 +446,7 @@ class GolangDomain(Domain):
                 _, typ = typename.split(' ', 1)
             except ValueError:
                 typ = typename
+
             if '.' in typ:
                 fullname = "(%s) %s" % (typ, funcname)
             else:
@@ -451,6 +457,7 @@ class GolangDomain(Domain):
 
     def _find_obj(self, env, pkgname, name, typ):
         """Find a Go object for "name", perhaps using the given package.
+        
         Returns a list of (name, object entry) tuples.
         """
         if typ == 'func':
