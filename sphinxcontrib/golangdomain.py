@@ -18,6 +18,7 @@ from docutils.parsers.rst import directives, Directive
 from sphinx import addnodes
 from sphinx.roles import XRefRole
 from sphinx.locale import _
+
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.util.nodes import make_refnode
@@ -32,8 +33,8 @@ go_func_sig_re = re.compile(
     r"""^\s* func \s*              # func (ignore)
          (?: \((.*)\) )? \s*       # struct/interface name
          ([\w.]+)                  # thing name
-         \( ([\w\s\[\],]*) \) \s*  # arguments
-         ([\w\s\[\](),]*) \s* $    # optionally return type
+         \( ([\w\s\[\](){},.*]*) \) \s*  # arguments
+         ([\w\s\[\](){},.*]*) \s* $    # optionally return type
     """,
     re.VERBOSE,
 )
@@ -224,6 +225,8 @@ class GolangObject(ObjectDescription):
             return _("%s (Golang const)") % name
         elif self.objtype == "type":
             return _("%s (Golang type)") % name
+        elif self.objtype == "method":
+            return _("%s (Golang method)") % name
         else:
             return ""
 
@@ -441,6 +444,7 @@ class GolangDomain(Domain):
 
     directives = {
         "function": GolangObject,
+        "method": GolangObject,
         "type": GolangObject,
         "var": GolangObject,
         "const": GolangObject,
@@ -458,6 +462,7 @@ class GolangDomain(Domain):
     initial_data = {
         "objects": {},  # fullname -> docname, objtype
         "functions": {},  # fullname -> targetname, docname
+        "methods": {},  # fullname -> targetname, docname
         "packages": {},  # pkgname -> docname, synopsis, platform, deprecated
     }
 
